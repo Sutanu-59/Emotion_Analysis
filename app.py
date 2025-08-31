@@ -1,5 +1,6 @@
 # app.py
 import streamlit as st
+import io
 import joblib
 import os
 import json
@@ -32,7 +33,7 @@ def update_csv_on_github(df_new):
         sha = r.json()["sha"]
         # Load existing file
         csv_content = base64.b64decode(r.json()["content"]).decode()
-        df_old = pd.read_csv(pd.compat.StringIO(csv_content))
+        df_old = pd.read_csv(io.StringIO(csv_content))
         df_final = pd.concat([df_old, df_new], ignore_index=True)
     else:
         sha = None
@@ -119,3 +120,4 @@ else:
 
     st.bar_chart(pd.DataFrame([mean_probs]).T.rename(columns={0: "Probability %"}))
     st.info("Session saved successfully! You can now view it in GitHub / Power BI.")
+
