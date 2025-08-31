@@ -5,6 +5,7 @@ import os
 import json
 import pandas as pd
 import random
+import requests, base64
 
 from questions import questions
 from scripts.predict_lr import predict_with_probs
@@ -12,6 +13,48 @@ from scripts.predict_lr import predict_with_probs
 # ===== Paths =====
 RESULTS_CSV = "data/session_results.csv"
 os.makedirs("data", exist_ok=True)
+
+# ===== GitHub Config =====
+GITHUB_REPO = "Sutanu-59/Emotion_Analysis"   # 🔹 change this
+FILE_PATH = "data/session_results.csv"    # path inside repo
+BRANCH = "main"
+TOKEN = st.secrets["GITHUB_TOKEN"]        # add to .streamlit/secrets.toml
+
+def update_csv_on_github(df_new):
+    """Update session_results.csv on GitHub repo"""
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{FILE_PATH}"
+
+    headers = {"Authorization": f"token {TOKEN}"}
+
+    # Check if file exists
+    r = requests.get(url, headers=headers)
+    if r.status_code == 200:
+        sha = r.json()["sha"]
+        # Load existing file
+        csv_content = base64.b64decode(r.json()["content"]).decode()
+        df_old = pd.read_csv(pd.compat.StringIO(csv_content))
+        df_final = pd.concat([df_old, df_new], ignore_index=True)
+    else:
+        sha = None
+        df_final = df_new
+
+    # Convert dataframe to csv string
+    csv_data = df_final.to_csv(index=False)
+
+    # Commit data
+    data = {
+        "message": "Update session results from Streamlit app",
+        "content": base64.b64encode(csv_data.encode()).decode(),
+        "branch": BRANCH
+    }
+    if sha:
+        data["sha"] = sha
+
+    res = requests.put(url, headers=headers, json=data)
+    if res.status_code in [200, 201]:
+        st.success("✅ Data successfully saved to GitHub repo!")
+    else:
+        st.error(f"❌ Failed to update GitHub: {res.json()}")
 
 # ===== Load Metrics =====
 METRICS_PATH = "models/metrics.json"
@@ -35,8 +78,7 @@ if "q_index" not in st.session_state:
     st.session_state.q_index = 0
     st.session_state.responses = []
     st.session_state.predictions = []
-    st.session_state.probabilities = []  # store probability dicts
-    # Shuffle and select 10 random questions from the list
+    st.session_state.probabilities = []
     st.session_state.questions_subset = random.sample(questions, 10)
 
 # ===== Ask Random Questions =====
@@ -47,7 +89,7 @@ if st.session_state.q_index < len(st.session_state.questions_subset):
 
     if st.button("Next Question"):
         if answer.strip():
-            pred, probs, _ = predict_with_probs(answer)  # <-- use new function
+            pred, probs, _ = predict_with_probs(answer)
             st.session_state.responses.append(answer)
             st.session_state.predictions.append(pred)
             st.session_state.probabilities.append(probs)
@@ -59,7 +101,6 @@ else:
     st.success("✅ Survey completed!")
 
     # ===== Aggregate Results =====
-    # Average probabilities across all responses (per session)
     prob_df = pd.DataFrame(st.session_state.probabilities)
     mean_probs = prob_df.mean().to_dict()
     mean_probs = {cls: round(mean_probs.get(cls, 0) * 100, 2) for cls in classes}
@@ -67,19 +108,14 @@ else:
     session_result = {"PatientID": patient_id}
     session_result.update(mean_probs)
 
-    # ===== Save to CSV =====
-    if os.path.exists(RESULTS_CSV):
-        results_df = pd.read_csv(RESULTS_CSV)
-    else:
-        results_df = pd.DataFrame(columns=["PatientID"] + classes)
+    new_df = pd.DataFrame([session_result])
 
-    results_df = pd.concat([results_df, pd.DataFrame([session_result])], ignore_index=True)
-    results_df.to_csv(RESULTS_CSV, index=False)
+    # ===== Save to GitHub instead of local only =====
+    update_csv_on_github(new_df)
 
     # ===== Show Results =====
     st.subheader("📊 Your Session Summary")
     st.write(session_result)
 
     st.bar_chart(pd.DataFrame([mean_probs]).T.rename(columns={0: "Probability %"}))
-
-    st.info("Session saved successfully! This data can now be analyzed in Power BI.")
+    st.info("Session saved successfully! You can now view it in GitHub / Power BI.")
