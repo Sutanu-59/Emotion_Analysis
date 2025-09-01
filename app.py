@@ -91,7 +91,8 @@ if st.session_state.q_index < len(st.session_state.questions_subset):
     if st.button("Next Question"):
         if answer.strip():
             pred, probs, _ = predict_with_probs(answer)
-            st.session_state.responses.append(answer)
+             # Save question + answer pair
+            st.session_state.responses.append({"question": question, "answer": answer})
             st.session_state.predictions.append(pred)
             st.session_state.probabilities.append(probs)
             st.session_state.q_index += 1
