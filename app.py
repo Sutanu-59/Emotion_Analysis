@@ -111,13 +111,13 @@ else:
 
     new_df = pd.DataFrame([session_result])
 
-    # ===== Save to GitHub instead of local only =====
-    update_csv_on_github(new_df)
-
+    # ===== Prevent multiple saves in one session =====
+    if "saved" not in st.session_state:
+        update_csv_on_github(new_df)
+        st.session_state.saved = True
     # ===== Show Results =====
     st.subheader("📊 Your Session Summary")
     st.write(session_result)
 
     st.bar_chart(pd.DataFrame([mean_probs]).T.rename(columns={0: "Probability %"}))
     st.info("Session saved successfully! You can now view it in GitHub / Power BI.")
-
