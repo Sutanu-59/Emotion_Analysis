@@ -1,6 +1,5 @@
 # app.py
 import streamlit as st
-import io
 import joblib
 import os
 import json
@@ -9,7 +8,7 @@ import random
 import requests, base64
 
 from questions import questions
-from scripts.predict_lr import predict_with_probs
+from scripts.predict_lr import predict_with_probs  # 🔹 updated to MiniLM version
 
 # ===== Paths =====
 RESULTS_CSV = "data/session_results.csv"
@@ -17,14 +16,13 @@ os.makedirs("data", exist_ok=True)
 
 # ===== GitHub Config =====
 GITHUB_REPO = "Sutanu-59/Emotion_Analysis"   # 🔹 change this
-FILE_PATH = "data/session_results.csv"    # path inside repo
+FILE_PATH = "data/session_results.csv"       # path inside repo
 BRANCH = "main"
-TOKEN = st.secrets["GITHUB_TOKEN"]        # add to .streamlit/secrets.toml
+TOKEN = st.secrets["GITHUB_TOKEN"]           # add to .streamlit/secrets.toml
 
 def update_csv_on_github(df_new):
     """Update session_results.csv on GitHub repo"""
     url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{FILE_PATH}"
-
     headers = {"Authorization": f"token {TOKEN}"}
 
     # Check if file exists
@@ -33,7 +31,7 @@ def update_csv_on_github(df_new):
         sha = r.json()["sha"]
         # Load existing file
         csv_content = base64.b64decode(r.json()["content"]).decode()
-        df_old = pd.read_csv(io.StringIO(csv_content))
+        df_old = pd.read_csv(pd.compat.StringIO(csv_content))
         df_final = pd.concat([df_old, df_new], ignore_index=True)
     else:
         sha = None
@@ -58,7 +56,7 @@ def update_csv_on_github(df_new):
         st.error(f"❌ Failed to update GitHub: {res.json()}")
 
 # ===== Load Metrics =====
-METRICS_PATH = "models/metrics.json"
+METRICS_PATH = "models/minilm_emotion/metrics.json"  # 🔹 updated path
 with open(METRICS_PATH, "r") as f:
     metrics = json.load(f)
 
@@ -90,9 +88,8 @@ if st.session_state.q_index < len(st.session_state.questions_subset):
 
     if st.button("Next Question"):
         if answer.strip():
-            pred, probs, _ = predict_with_probs(answer)
-             # Save question + answer pair
-            st.session_state.responses.append({"question": question, "answer": answer})
+            pred, probs, _ = predict_with_probs(answer)  # 🔹 MiniLM prediction
+            st.session_state.responses.append(answer)
             st.session_state.predictions.append(pred)
             st.session_state.probabilities.append(probs)
             st.session_state.q_index += 1
@@ -112,10 +109,9 @@ else:
 
     new_df = pd.DataFrame([session_result])
 
-    # ===== Prevent multiple saves in one session =====
-    if "saved" not in st.session_state:
-        update_csv_on_github(new_df)
-        st.session_state.saved = True
+    # ===== Save to GitHub instead of local only =====
+    update_csv_on_github(new_df)
+
     # ===== Show Results =====
     st.subheader("📊 Your Session Summary")
     st.write(session_result)
