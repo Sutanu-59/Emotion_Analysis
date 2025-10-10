@@ -1,7 +1,7 @@
 streamlit
 pandas
-scikit-learn
-nltk
+numpy
 joblib
+requests
+scikit-learn
 sentence-transformers
-matplotlib
