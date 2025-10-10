@@ -23,15 +23,15 @@ TOKEN = st.secrets["GITHUB_TOKEN"]
 
 # ===== GitHub Upload Function =====
 def update_csv_on_github(df_new):
-    """Upload session_results.csv to GitHub"""
+    """Upload session_results.csv to GitHub safely (avoids SHA conflicts)"""
     url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{FILE_PATH}"
     headers = {"Authorization": f"token {TOKEN}"}
 
-    # Check if file exists
+    # Always get latest file info
     res = requests.get(url, headers=headers)
     if res.status_code == 200:
         data = res.json()
-        sha = data["sha"]
+        sha = data["sha"]  # latest SHA
         csv_content = base64.b64decode(data["content"]).decode()
         df_old = pd.read_csv(io.StringIO(csv_content))
         df_final = pd.concat([df_old, df_new], ignore_index=True)
@@ -39,20 +39,27 @@ def update_csv_on_github(df_new):
         sha = None
         df_final = df_new
 
+    # Convert CSV to base64
     csv_data = df_final.to_csv(index=False)
     encoded = base64.b64encode(csv_data.encode()).decode()
 
+    # Commit
     commit_data = {
         "message": "Update session results from Streamlit app",
         "content": encoded,
         "branch": BRANCH,
     }
     if sha:
-        commit_data["sha"] = sha
+        commit_data["sha"] = sha  # important!
 
     upload = requests.put(url, headers=headers, json=commit_data)
+
     if upload.status_code in [200, 201]:
         st.success("✅ Data successfully saved to GitHub!")
+    elif upload.status_code == 409:
+        # SHA conflict: retry once
+        st.warning("⚠ SHA conflict, retrying...")
+        update_csv_on_github(df_new)
     else:
         st.error(f"❌ GitHub update failed: {upload.json()}")
 
@@ -129,4 +136,5 @@ else:
     st.write(session_result)
     st.bar_chart(pd.DataFrame([mean_probs]).T.rename(columns={0: "Probability %"}))
     st.info("Session saved successfully! You can now view it in GitHub / Power BI.")
+
 
