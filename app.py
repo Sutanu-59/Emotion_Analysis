@@ -81,43 +81,34 @@ if "q_index" not in st.session_state:
     st.session_state.questions_subset = random.sample(questions, 10)
     st.session_state.cached_embeddings = {}  # cache embeddings per text
 
-# Initialize cache for embeddings if not present
-if "cached_embeddings" not in st.session_state:
-    st.session_state.cached_embeddings = {}
-
-# Ask random questions
+# ===== Ask Random Questions =====
 if st.session_state.q_index < len(st.session_state.questions_subset):
     question = st.session_state.questions_subset[st.session_state.q_index]
     st.subheader(f"Q{st.session_state.q_index + 1}: {question}")
+    answer = st.text_area("Your response:", key=f"ans_{st.session_state.q_index}")
 
-    with st.form(key=f"form_{st.session_state.q_index}"):
-        answer = st.text_area("Your response:", key=f"ans_{st.session_state.q_index}")
-        submit = st.form_submit_button("Next Question")
-
-        if submit:
-            if answer.strip():
-                # Cache embedding per answer
-                if answer not in st.session_state.cached_embeddings:
-                    emb = embedder.encode([answer])
-                    st.session_state.cached_embeddings[answer] = emb
-                else:
-                    emb = st.session_state.cached_embeddings[answer]
-
-                # Predict probabilities
-                proba = lr_calibrated.predict_proba(emb)[0]
-                pred_idx = int(proba.argmax())
-                pred_label = CLASSES[pred_idx]
-                probs_dict = {CLASSES[i]: float(p) for i, p in enumerate(proba)}
-
-                # Store responses
-                st.session_state.responses.append(answer)
-                st.session_state.predictions.append(pred_label)
-                st.session_state.probabilities.append(probs_dict)
-
-                # Move to next question without rerun
-                st.session_state.q_index += 1
+    if st.button("Next Question"):
+        if answer.strip():
+            # Check if embedding already cached
+            if answer not in st.session_state.cached_embeddings:
+                emb = embedder.encode([answer])
+                st.session_state.cached_embeddings[answer] = emb
             else:
-                st.warning("Please provide an answer before continuing.")
+                emb = st.session_state.cached_embeddings[answer]
+
+            # Predict
+            proba = lr_calibrated.predict_proba(emb)[0]
+            pred_idx = int(proba.argmax())
+            pred_label = CLASSES[pred_idx]
+            probs_dict = {CLASSES[i]: float(p) for i, p in enumerate(proba)}
+
+            st.session_state.responses.append(answer)
+            st.session_state.predictions.append(pred_label)
+            st.session_state.probabilities.append(probs_dict)
+            st.session_state.q_index += 1
+            st.experimental_rerun()  # rerun to show next question
+        else:
+            st.warning("Please provide an answer before continuing.")
 else:
     st.success("✅ Survey completed!")
 
@@ -138,6 +129,3 @@ else:
     st.write(session_result)
     st.bar_chart(pd.DataFrame([mean_probs]).T.rename(columns={0: "Probability %"}))
     st.info("Session saved successfully! You can now view it in GitHub / Power BI.")
-
-
-
