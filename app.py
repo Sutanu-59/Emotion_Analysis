@@ -100,7 +100,7 @@ if st.session_state.q_index < len(st.session_state.questions_subset):
             st.session_state.predictions.append(pred)
             st.session_state.probabilities.append(probs)
             st.session_state.q_index += 1
-            st.experimental_rerun()  # now safe since upload flag prevents duplicates
+            st.rerun()  # now safe since upload flag prevents duplicates
         else:
             st.warning("Please provide an answer before continuing.")
 
@@ -126,3 +126,4 @@ else:
     st.write(session_result)
     st.bar_chart(pd.DataFrame([mean_probs]).T.rename(columns={0: "Probability %"}))
     st.info("Session saved successfully! You can now view it in GitHub / Power BI.")
+
