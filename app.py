@@ -9,7 +9,7 @@ import requests, base64
 import io
 
 from questions import questions
-from scripts.predict_with_probs_miniLM import predict_with_probs, embedder, lr_calibrated, CLASSES
+from scripts.predict_lr import predict_with_probs, embedder, lr_calibrated, CLASSES
 
 # ===== Paths =====
 RESULTS_CSV = "data/session_results.csv"
@@ -138,5 +138,6 @@ else:
     st.write(session_result)
     st.bar_chart(pd.DataFrame([mean_probs]).T.rename(columns={0: "Probability %"}))
     st.info("Session saved successfully! You can now view it in GitHub / Power BI.")
+
 
 
