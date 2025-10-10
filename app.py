@@ -81,12 +81,15 @@ if "q_index" not in st.session_state:
     st.session_state.questions_subset = random.sample(questions, 10)
     st.session_state.cached_embeddings = {}  # cache embeddings per text
 
-# ===== Ask Random Questions =====
+# Initialize cache for embeddings if not present
+if "cached_embeddings" not in st.session_state:
+    st.session_state.cached_embeddings = {}
+
+# Ask random questions
 if st.session_state.q_index < len(st.session_state.questions_subset):
     question = st.session_state.questions_subset[st.session_state.q_index]
     st.subheader(f"Q{st.session_state.q_index + 1}: {question}")
 
-    # Use a form to prevent full rerun
     with st.form(key=f"form_{st.session_state.q_index}"):
         answer = st.text_area("Your response:", key=f"ans_{st.session_state.q_index}")
         submit = st.form_submit_button("Next Question")
@@ -100,19 +103,19 @@ if st.session_state.q_index < len(st.session_state.questions_subset):
                 else:
                     emb = st.session_state.cached_embeddings[answer]
 
-                # Predict
+                # Predict probabilities
                 proba = lr_calibrated.predict_proba(emb)[0]
                 pred_idx = int(proba.argmax())
                 pred_label = CLASSES[pred_idx]
                 probs_dict = {CLASSES[i]: float(p) for i, p in enumerate(proba)}
 
+                # Store responses
                 st.session_state.responses.append(answer)
                 st.session_state.predictions.append(pred_label)
                 st.session_state.probabilities.append(probs_dict)
-                st.session_state.q_index += 1
 
-                # Avoid full rerun by using placeholder
-                st.experimental_rerun()  # minimal rerun inside the form
+                # Move to next question without rerun
+                st.session_state.q_index += 1
             else:
                 st.warning("Please provide an answer before continuing.")
 else:
@@ -135,4 +138,5 @@ else:
     st.write(session_result)
     st.bar_chart(pd.DataFrame([mean_probs]).T.rename(columns={0: "Probability %"}))
     st.info("Session saved successfully! You can now view it in GitHub / Power BI.")
+
 
