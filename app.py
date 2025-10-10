@@ -6,6 +6,7 @@ import json
 import pandas as pd
 import random
 import requests, base64
+import io
 
 from questions import questions
 from scripts.predict_lr import predict_with_probs  # 🔹 updated to MiniLM version
@@ -18,42 +19,47 @@ os.makedirs("data", exist_ok=True)
 GITHUB_REPO = "Sutanu-59/Emotion_Analysis"   # 🔹 change this
 FILE_PATH = "data/session_results.csv"       # path inside repo
 BRANCH = "main"
-TOKEN = st.secrets["GITHUB_TOKEN"]           # add to .streamlit/secrets.toml
+TOKEN = st.secrets["GITHUB_TOKEN"]         # add to .streamlit/secrets.toml
+
+import io
 
 def update_csv_on_github(df_new):
-    """Update session_results.csv on GitHub repo"""
+    """Upload session_results.csv to GitHub"""
     url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{FILE_PATH}"
     headers = {"Authorization": f"token {TOKEN}"}
 
     # Check if file exists
-    r = requests.get(url, headers=headers)
-    if r.status_code == 200:
-        sha = r.json()["sha"]
-        # Load existing file
-        csv_content = base64.b64decode(r.json()["content"]).decode()
-        df_old = pd.read_csv(pd.compat.StringIO(csv_content))
+    res = requests.get(url, headers=headers)
+    if res.status_code == 200:
+        data = res.json()
+        sha = data["sha"]
+        csv_content = base64.b64decode(data["content"]).decode()
+        df_old = pd.read_csv(io.StringIO(csv_content))
         df_final = pd.concat([df_old, df_new], ignore_index=True)
     else:
         sha = None
         df_final = df_new
 
-    # Convert dataframe to csv string
+    # Convert to CSV
     csv_data = df_final.to_csv(index=False)
+    encoded = base64.b64encode(csv_data.encode()).decode()
 
-    # Commit data
-    data = {
+    # Commit
+    commit_data = {
         "message": "Update session results from Streamlit app",
-        "content": base64.b64encode(csv_data.encode()).decode(),
-        "branch": BRANCH
+        "content": encoded,
+        "branch": BRANCH,
     }
     if sha:
-        data["sha"] = sha
+        commit_data["sha"] = sha
 
-    res = requests.put(url, headers=headers, json=data)
-    if res.status_code in [200, 201]:
-        st.success("✅ Data successfully saved to GitHub repo!")
+    upload = requests.put(url, headers=headers, json=commit_data)
+
+    if upload.status_code in [200, 201]:
+        st.success("✅ Data successfully saved to GitHub!")
     else:
-        st.error(f"❌ Failed to update GitHub: {res.json()}")
+        st.error(f"❌ GitHub update failed: {upload.json()}")
+
 
 # ===== Load Metrics =====
 METRICS_PATH = "models/minilm_emotion/metrics.json"  # 🔹 updated path
