@@ -1,0 +1,13 @@
+{
+    "accuracy": 0.6785714285714286,
+    "report": "                      precision    recall  f1-score   support\n\n               Anger     0.6053    0.5750    0.5897        40\n             Anxiety     0.9474    0.9000    0.9231        40\n          Depression     0.5641    0.5500    0.5570        40\n              Normal     0.7436    0.7250    0.7342        40\nPersonality disorder     0.7317    0.7500    0.7407        40\n             Sadness     0.5814    0.6250    0.6024        40\n            Suicidal     0.5952    0.6250    0.6098        40\n\n            accuracy                         0.6786       280\n           macro avg     0.6812    0.6786    0.6796       280\n        weighted avg     0.6812    0.6786    0.6796       280\n",
+    "classes": [
+        "Anger",
+        "Anxiety",
+        "Depression",
+        "Normal",
+        "Personality disorder",
+        "Sadness",
+        "Suicidal"
+    ]
+}
