@@ -5,74 +5,61 @@ import os
 import json
 import pandas as pd
 import random
-import requests
-import base64
+import requests, base64
 import io
 
 from questions import questions
-from scripts.predict_lr import predict_with_probs  # 🔹 MiniLM prediction
+from scripts.predict_with_probs_miniLM import predict_with_probs, embedder, lr_calibrated, CLASSES
 
 # ===== Paths =====
 RESULTS_CSV = "data/session_results.csv"
 os.makedirs("data", exist_ok=True)
 
 # ===== GitHub Config =====
-GITHUB_REPO = "Sutanu-59/Emotion_Analysis"   # 🔹 change this
-FILE_PATH = "data/session_results.csv"       # path inside repo
+GITHUB_REPO = "Sutanu-59/Emotion_Analysis"
+FILE_PATH = "data/session_results.csv"
 BRANCH = "main"
-TOKEN = st.secrets["GITHUB_TOKEN"]          # add to .streamlit/secrets.toml
+TOKEN = st.secrets["GITHUB_TOKEN"]
 
-# ===== Helper: GitHub Upload =====
-def update_csv_on_github(df_new, patient_id_col="PatientID"):
-    """
-    Safely upload session_results.csv to GitHub:
-    - Removes duplicates by PatientID
-    - Handles SHA conflicts
-    """
+# ===== GitHub Upload Function =====
+def update_csv_on_github(df_new):
+    """Upload session_results.csv to GitHub"""
     url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{FILE_PATH}"
     headers = {"Authorization": f"token {TOKEN}"}
 
-    for attempt in range(3):
-        res = requests.get(url, headers=headers)
-        if res.status_code == 200:
-            data = res.json()
-            sha = data["sha"]
-            csv_content = base64.b64decode(data["content"]).decode()
-            df_old = pd.read_csv(io.StringIO(csv_content))
+    # Check if file exists
+    res = requests.get(url, headers=headers)
+    if res.status_code == 200:
+        data = res.json()
+        sha = data["sha"]
+        csv_content = base64.b64decode(data["content"]).decode()
+        df_old = pd.read_csv(io.StringIO(csv_content))
+        df_final = pd.concat([df_old, df_new], ignore_index=True)
+    else:
+        sha = None
+        df_final = df_new
 
-            # Remove existing entry for same PatientID
-            df_old = df_old[df_old[patient_id_col] != df_new[patient_id_col].values[0]]
-            df_final = pd.concat([df_old, df_new], ignore_index=True)
-        else:
-            sha = None
-            df_final = df_new
+    csv_data = df_final.to_csv(index=False)
+    encoded = base64.b64encode(csv_data.encode()).decode()
 
-        # Convert to CSV and encode
-        csv_data = df_final.to_csv(index=False)
-        encoded = base64.b64encode(csv_data.encode()).decode()
+    commit_data = {
+        "message": "Update session results from Streamlit app",
+        "content": encoded,
+        "branch": BRANCH,
+    }
+    if sha:
+        commit_data["sha"] = sha
 
-        commit_data = {
-            "message": f"Update session results for {df_new[patient_id_col].values[0]}",
-            "content": encoded,
-            "branch": BRANCH,
-        }
-        if sha:
-            commit_data["sha"] = sha
-
-        upload = requests.put(url, headers=headers, json=commit_data)
-        if upload.status_code in [200, 201]:
-            st.success("✅ Data successfully saved to GitHub!")
-            return
-        else:
-            sha = None  # Retry if SHA conflict
-
-    st.error(f"❌ GitHub update failed: {upload.json()}")
+    upload = requests.put(url, headers=headers, json=commit_data)
+    if upload.status_code in [200, 201]:
+        st.success("✅ Data successfully saved to GitHub!")
+    else:
+        st.error(f"❌ GitHub update failed: {upload.json()}")
 
 # ===== Load Metrics =====
-METRICS_PATH = "models/minilm_emotion/metrics.json"  # 🔹 updated path
+METRICS_PATH = "models/minilm_emotion/metrics.json"
 with open(METRICS_PATH, "r") as f:
     metrics = json.load(f)
-
 classes = metrics["classes"]
 
 # ===== Streamlit Config =====
@@ -92,6 +79,7 @@ if "q_index" not in st.session_state:
     st.session_state.predictions = []
     st.session_state.probabilities = []
     st.session_state.questions_subset = random.sample(questions, 10)
+    st.session_state.cached_embeddings = {}  # cache embeddings per text
 
 # ===== Ask Random Questions =====
 if st.session_state.q_index < len(st.session_state.questions_subset):
@@ -101,16 +89,26 @@ if st.session_state.q_index < len(st.session_state.questions_subset):
 
     if st.button("Next Question"):
         if answer.strip():
-            pred, probs, _ = predict_with_probs(answer)  # MiniLM prediction
-            st.session_state.responses.append(answer)
-            st.session_state.predictions.append(pred)
-            st.session_state.probabilities.append(probs)
-            st.session_state.q_index += 1
-            st.rerun()
+            # Check if embedding already cached
+            if answer not in st.session_state.cached_embeddings:
+                emb = embedder.encode([answer])
+                st.session_state.cached_embeddings[answer] = emb
+            else:
+                emb = st.session_state.cached_embeddings[answer]
 
+            # Predict
+            proba = lr_calibrated.predict_proba(emb)[0]
+            pred_idx = int(proba.argmax())
+            pred_label = CLASSES[pred_idx]
+            probs_dict = {CLASSES[i]: float(p) for i, p in enumerate(proba)}
+
+            st.session_state.responses.append(answer)
+            st.session_state.predictions.append(pred_label)
+            st.session_state.probabilities.append(probs_dict)
+            st.session_state.q_index += 1
+            st.experimental_rerun()  # rerun to show next question
         else:
             st.warning("Please provide an answer before continuing.")
-
 else:
     st.success("✅ Survey completed!")
 
@@ -119,19 +117,15 @@ else:
     mean_probs = prob_df.mean().to_dict()
     mean_probs = {cls: round(mean_probs.get(cls, 0) * 100, 2) for cls in classes}
 
-    # Prepare session result
     session_result = {"PatientID": patient_id}
     session_result.update(mean_probs)
     new_df = pd.DataFrame([session_result])
 
-    # ===== Upload to GitHub =====
+    # ===== Save to GitHub =====
     update_csv_on_github(new_df)
 
     # ===== Show Results =====
     st.subheader("📊 Your Session Summary")
     st.write(session_result)
-
     st.bar_chart(pd.DataFrame([mean_probs]).T.rename(columns={0: "Probability %"}))
     st.info("Session saved successfully! You can now view it in GitHub / Power BI.")
-
-
