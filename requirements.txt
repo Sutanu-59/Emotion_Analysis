@@ -3,4 +3,5 @@ pandas
 scikit-learn
 nltk
 joblib
+sentence-transformers
 matplotlib
