@@ -15,7 +15,7 @@ os.makedirs(MODEL_DIR, exist_ok=True)
 
 def download_from_hf_if_needed():
     """Download model files from Hugging Face Hub if not already cached locally."""
-    base_url = f"https://huggingface.co/{HF_REPO}/resolve/main/{MODEL_DIR}/"
+    base_url = f"https://huggingface.co/{HF_REPO}/resolve/main/"
     
     for fname in FILES:
         fpath = os.path.join(MODEL_DIR, fname)
@@ -63,3 +63,4 @@ def predict_with_probs(text: str):
     probs_dict = {id2label[i]: float(p) for i, p in enumerate(proba)}
 
     return pred_label, probs_dict, CLASSES
+
