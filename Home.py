@@ -145,8 +145,6 @@ with st.container():
     with col1:
         if st.button("Let's Chat 💬", key="login_nav", use_container_width=True):
             redirect_to_login()
-    with col2:
-        st.markdown("<div class='login-button'><a href='#text'>Text Chat</a></div>", unsafe_allow_html=True)
     with col3:
         st.markdown("<div class='login-button'><a href='#videos'>Video Chat</a></div>", unsafe_allow_html=True)
     with col4:
@@ -226,3 +224,4 @@ st.markdown("""
         </div>
     </div>            
 """, unsafe_allow_html=True)
+
