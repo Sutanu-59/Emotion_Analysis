@@ -16,7 +16,7 @@ def login_user(email, password):
         user_dict = {"name": data[0], "email": data[1], "password": data[2]}
         return user_dict
     else:
-        return None
+        return None
 
 # --- Custom CSS: gradient + text colors ---
 st.markdown("""
@@ -167,5 +167,6 @@ st.markdown("""
     <hr style="border: 0.5px solid #80bfff; margin-top: 2em;">
     <p style='text-align:center; color:#004aad;'>© 2025 RERF | Depression Analysis Assistant 💬</p>
 """, unsafe_allow_html=True)
+
 
 
