@@ -17,84 +17,6 @@ st.set_page_config(
     page_icon="🧠"
 )
 
-# ===== Unified Blue–White Theme =====
-# st.markdown("""
-#     <style>
-#         /* Background gradient */
-#         .stApp {
-#             background: linear-gradient(135deg, #ffffff 0%, #d0e7ff 50%, #a9d6ff 100%);
-#             color: #002b5b;
-#         }
-
-#         /* Headings & text */
-#         h1, h2, h3, h4, h5, h6 {
-#             color: #004a9f !important;
-#             font-family: 'Segoe UI', sans-serif;
-#         }
-#         label, p, span, div, input, textarea {
-#             color: #002b5b !important;
-#             font-family: 'Segoe UI', sans-serif;
-#         }
-
-#         /* Buttons */
-#         .stButton>button {
-#             background: linear-gradient(90deg, #0066ff, #00aaff);
-#             color: white !important;
-#             border-radius: 25px !important;
-#             padding: 0.6em 1.5em !important;
-#             border: none !important;
-#             font-weight: bold;
-#             transition: 0.3s ease-in-out;
-#         }
-#         .stButton>button:hover {
-#             background: linear-gradient(90deg, #004aad, #0097e6);
-#             transform: scale(1.05);
-#             box-shadow: 0 4px 15px rgba(0, 102, 255, 0.4);
-#         }
-
-#         /* Text inputs */
-#         textarea, input[type="text"] {
-#             background-color: rgba(255,255,255,0.85) !important;
-#             border: 1px solid #a9d6ff !important;
-#             border-radius: 10px !important;
-#             color: #002b5b !important;
-#         }
-
-#         /* Success / warning / info boxes */
-#         [data-testid="stAlert"] {
-#             border-radius: 15px !important;
-#             padding: 1em !important;
-#             border-left: 5px solid #0091ff !important;
-#             background-color: rgba(255,255,255,0.75) !important;
-#             box-shadow: 0 2px 10px rgba(173, 216, 230, 0.3);
-#         }
-
-#         [data-testid="stAlert-success"] {
-#             border-left-color: #00c292 !important;
-#             background: linear-gradient(90deg, rgba(210,255,239,0.6), rgba(255,255,255,0.5));
-#         }
-#         [data-testid="stAlert-warning"] {
-#             border-left-color: #ffcc00 !important;
-#             background: linear-gradient(90deg, rgba(255,255,204,0.6), rgba(255,255,255,0.5));
-#         }
-#         [data-testid="stAlert-info"] {
-#             border-left-color: #0091ff !important;
-#             background: linear-gradient(90deg, rgba(204,238,255,0.6), rgba(255,255,255,0.5));
-#         }
-
-#         /* Chart container style */
-#         .stPlotlyChart, .stAltairChart, .stVegaLiteChart, .stPyplotChart {
-#             background: rgba(255,255,255,0.85);
-#             border-radius: 20px;
-#             padding: 15px;
-#             box-shadow: 0 2px 15px rgba(173, 216, 230, 0.25);
-#         }
-
-#         /* Hide footer */
-#         footer {visibility: hidden;}
-#     </style>
-# """, unsafe_allow_html=True)
-
 # Hide sidebar completely
 st.markdown("""
     <style>
@@ -404,4 +326,5 @@ else:
     st.subheader("📊 Your Session Summary")
     st.write(session_result)
     st.bar_chart(pd.DataFrame([mean_probs]).T.rename(columns={0: "Probability %"}))
+
     st.info("Session saved successfully! You can now view it in GitHub / Power BI.")
