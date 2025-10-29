@@ -5,4 +5,5 @@ joblib
 requests
 scikit-learn
 sentence-transformers
-sqlite3
+
+
