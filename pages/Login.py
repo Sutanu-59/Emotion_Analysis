@@ -1,7 +1,22 @@
 import streamlit as st
 import time
+from github_utils import update_github_db_and_csv, DB_PATH
 
 st.set_page_config(page_title="Login / Register - Depression Analysis", page_icon="💬", layout="centered")
+
+def login_user(email, password):
+    import sqlite3
+    conn = sqlite3.connect('data/users.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE email = ? AND password = ?", (email, password))
+    data = c.fetchone()
+    conn.close()
+    
+    if data:
+        user_dict = {"name": data[0], "email": data[1], "password": data[2]}
+        return user_dict
+    else:
+        return None
 
 # --- Custom CSS: gradient + text colors ---
 st.markdown("""
@@ -95,20 +110,10 @@ with tab1:
     st.subheader("Login to your account")
     email = st.text_input("Email", key="login_email")
     password = st.text_input("Password", type="password", key="login_pass")
-
-    # if st.button("Login"):
-    #     user = st.session_state.users.get(email)
-    #     if user and user["password"] == password:
-    #         st.session_state.current_user = email
-    #         st.success(f"Welcome back, {user['name']}! 💙")
-    #         st.markdown("<div class='success-box'>Redirecting you to your chat...</div>", unsafe_allow_html=True)
-    #         time.sleep(1.5)
-    #         st.switch_page("pages/TextChat.py")
-    #     else:
-    #         st.error("Invalid email or password. Please try again.")
-
+    
     if st.button("Login"):
-        user = st.session_state.users.get(email)
+        # user = st.session_state.users.get(email)
+        user = login_user(email, password)
         if user and user["password"] == password:
             st.session_state.current_user = email
             st.success(f"Welcome back, {user['name']}! 💙")
@@ -122,21 +127,39 @@ with tab1:
 # --- Register Tab ---
 with tab2:
     st.subheader("Create a new account")
-    name = st.text_input("Full Name", key="reg_name")
-    email_reg = st.text_input("Email", key="reg_email")
-    password_reg = st.text_input("Password", type="password", key="reg_pass")
-    confirm_pass = st.text_input("Confirm Password", type="password", key="reg_conf")
+    fullname = st.text_input("Full Name", key="reg_name")
+    email = st.text_input("Email", key="reg_email")
+    password = st.text_input("Password", type="password", key="reg_pass")
+    cpass = st.text_input("Confirm Password", type="password", key="reg_conf")
+    token = st.secrets["GITHUB_TOKEN"]
 
     if st.button("Register"):
-        if not name or not email_reg or not password_reg:
+        if not fullname or not email or not password:
             st.warning("Please fill in all fields.")
-        elif password_reg != confirm_pass:
+        elif password != cpass:
             st.warning("Passwords do not match.")
-        elif email_reg in st.session_state.users:
+        elif email in st.session_state.users:
             st.warning("Email already registered. Please log in.")
         else:
-            st.session_state.users[email_reg] = {"name": name, "password": password_reg}
-            st.success(f"Account created for {name}! 🎉 You can now log in.")
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            try:
+                c.execute(
+                    'INSERT INTO users (fullname, email, password, cpass) VALUES (?, ?, ?, ?)',
+                    (fullname, email, password, cpass)
+                )
+
+                conn.commit()
+                st.success("🎉 Account created successfully!")
+                st.info("You can now log in.")
+                if token:
+                    update_github_db_and_csv(token)
+            except sqlite3.IntegrityError:
+                st.error("Username already exists.")
+            conn.close()
+
+            st.session_state.users[email] = {"name": fullname, "password": password}
+            st.success(f"Account created for {fullname}! 🎉 You can now log in.")
             st.markdown("<div class='success-box'>Registration successful. Please go to the Login tab.</div>", unsafe_allow_html=True)
 
 # --- Footer ---
@@ -144,3 +167,4 @@ st.markdown("""
     <hr style="border: 0.5px solid #80bfff; margin-top: 2em;">
     <p style='text-align:center; color:#004aad;'>© 2025 RERF | Depression Analysis Assistant 💬</p>
 """, unsafe_allow_html=True)
+
