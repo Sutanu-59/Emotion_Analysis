@@ -143,7 +143,7 @@ st.markdown("""
 with st.container():
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
     with col1:
-        if st.button("<div class='login-button'>Let's Chat 💬</div>", key="login_nav", use_container_width=True):
+        if st.button("<div class='login-button'>Let's Chat 💬</div>", key="login_nav",unsafe_allow_html=True, use_container_width=True):
             redirect_to_login()
     with col3:
         st.markdown("<div class='login-button'><a href='#videos'>Video Chat</a></div>", unsafe_allow_html=True)
@@ -224,5 +224,6 @@ st.markdown("""
         </div>
     </div>            
 """, unsafe_allow_html=True)
+
 
 
