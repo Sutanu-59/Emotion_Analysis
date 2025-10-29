@@ -28,11 +28,11 @@ def redirect_to_login():
 # --- 🌈 Combined White–Blue Theme CSS ---
 st.markdown("""
     <style>
-        div.stButton > button[kind="secondary"], div.stButton > button[kind="primary"], div.stButton > button {
-            color: white !important;            /* ✅ White text */
-            background-color: #1E90FF !important;  /* Optional: DodgerBlue background */
-            border-radius: 10px !important;     /* Optional: Rounded edges */
-            font-weight: 600 !important;        /* Optional: Bold text */
+        div[data-testid="stButton"][key="login_nav"] button {
+            color: white !important;
+            background: linear-gradient(90deg, #4CAF50, #2E8B57) !important;
+            font-weight: 600 !important;
+            border-radius: 10px !important;
         }
         /* Background + base text */
         .stApp {
@@ -230,6 +230,7 @@ st.markdown("""
         </div>
     </div>            
 """, unsafe_allow_html=True)
+
 
 
 
