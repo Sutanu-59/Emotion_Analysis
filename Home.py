@@ -26,17 +26,6 @@ def redirect_to_login():
     st.switch_page("pages/Login.py")
 
 # --- 🌈 Combined White–Blue Theme CSS ---
-st.button("""
-    <style>
-        div.stButton > button[kind="secondary"], div.stButton > button[kind="primary"], div.stButton > button {
-            color: white !important;              /* White text */
-            background-color: #1E90FF !important; /* Blue background */
-            border-radius: 10px !important;
-            font-weight: 600 !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
 st.markdown("""
     <style>
         /* Background + base text */
@@ -235,6 +224,7 @@ st.markdown("""
         </div>
     </div>            
 """, unsafe_allow_html=True)
+
 
 
 
