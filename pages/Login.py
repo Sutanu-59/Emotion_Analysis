@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 from github_utils import update_github_db_and_csv, DB_PATH
+import sqlite3
 
 st.set_page_config(page_title="Login / Register - Depression Analysis", page_icon="💬", layout="centered")
 
@@ -167,6 +168,7 @@ st.markdown("""
     <hr style="border: 0.5px solid #80bfff; margin-top: 2em;">
     <p style='text-align:center; color:#004aad;'>© 2025 RERF | Depression Analysis Assistant 💬</p>
 """, unsafe_allow_html=True)
+
 
 
 
