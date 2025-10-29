@@ -26,14 +26,18 @@ def redirect_to_login():
     st.switch_page("pages/Login.py")
 
 # --- 🌈 Combined White–Blue Theme CSS ---
-st.markdown("""
-    <style>
-        div[data-testid="stButton"][key="login_nav"] button {
+st.button("""
+<style>
+    div[data-testid="stButton"][key="login_nav"] button {
             color: white !important;
             background: linear-gradient(90deg, #4CAF50, #2E8B57) !important;
             font-weight: 600 !important;
             border-radius: 10px !important;
         }
+    </style>""", unsafe_allow_html=True)
+
+st.markdown("""
+    <style>
         /* Background + base text */
         .stApp {
             background: linear-gradient(135deg, #ffffff 0%, #d0e7ff 50%, #a9d6ff 100%);
@@ -230,6 +234,7 @@ st.markdown("""
         </div>
     </div>            
 """, unsafe_allow_html=True)
+
 
 
 
