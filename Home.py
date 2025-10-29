@@ -28,6 +28,12 @@ def redirect_to_login():
 # --- 🌈 Combined White–Blue Theme CSS ---
 st.markdown("""
     <style>
+        div.stButton > button[kind="secondary"], div.stButton > button[kind="primary"], div.stButton > button {
+            color: white !important;            /* ✅ White text */
+            background-color: #1E90FF !important;  /* Optional: DodgerBlue background */
+            border-radius: 10px !important;     /* Optional: Rounded edges */
+            font-weight: 600 !important;        /* Optional: Bold text */
+        }
         /* Background + base text */
         .stApp {
             background: linear-gradient(135deg, #ffffff 0%, #d0e7ff 50%, #a9d6ff 100%);
@@ -143,7 +149,7 @@ st.markdown("""
 with st.container():
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
     with col1:
-        if st.button("<div class='login-button'>Let's Chat 💬</div>", key="login_nav",unsafe_allow_html=True, use_container_width=True):
+        if st.button("Let's Chat 💬", key="login_nav", use_container_width=True):
             redirect_to_login()
     with col3:
         st.markdown("<div class='login-button'><a href='#videos'>Video Chat</a></div>", unsafe_allow_html=True)
@@ -224,6 +230,7 @@ st.markdown("""
         </div>
     </div>            
 """, unsafe_allow_html=True)
+
 
 
 
