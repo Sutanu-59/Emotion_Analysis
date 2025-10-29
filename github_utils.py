@@ -10,7 +10,7 @@ from datetime import datetime
 
 # ===== Basic Settings =====
 DB_PATH = os.path.join("data", "users.db")
-GITHUB_REPO = "Ranajoy66/dummy-login-app"   # 🔹 Change this to your repo name
+GITHUB_REPO = "Sutanu-59/Emotion_Analysis"   # 🔹 Change this to your repo name
 DB_FILE_PATH = "data/users.db"
 PUBLIC_CSV_PATH = "data/users_public.csv"
 BRANCH = "main"
@@ -70,3 +70,4 @@ def update_github_db_and_csv(token):
     commit_message = f"Update users.db and users_public.csv ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
     _commit_file_to_github(DB_PATH, DB_FILE_PATH, token, commit_message)
     _commit_file_to_github(PUBLIC_CSV_PATH, PUBLIC_CSV_PATH, token, commit_message)
+
