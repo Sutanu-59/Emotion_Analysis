@@ -33,6 +33,10 @@ st.markdown("""
             background: linear-gradient(135deg, #ffffff 0%, #d0e7ff 50%, #a9d6ff 100%);
             color: #002b5b;
         }
+        button:has-text("Let's Chat 💬") {
+            color: white !important;
+            background: linear-gradient(90deg, #0066ff, #00aaff) !important;
+        }
         h1, h2, h3, h4, h5, h6 {
             color: #004a9f !important;
         }
@@ -143,7 +147,7 @@ st.markdown("""
 with st.container():
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
     with col1:
-        if st.button("Let's Chat 💬", key="login_nav", use_container_width=True,):
+        if st.button("Let's Chat 💬", key="login_nav", use_container_width=True):
             redirect_to_login()
     with col3:
         st.markdown("<div class='login-button'><a href='#videos'>Video Chat</a></div>", unsafe_allow_html=True)
@@ -224,6 +228,7 @@ st.markdown("""
         </div>
     </div>            
 """, unsafe_allow_html=True)
+
 
 
 
